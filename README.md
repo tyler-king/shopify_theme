@@ -64,7 +64,7 @@ example your `config/settings.html` or other configuration driven items
 - config/settings.html
 ```
 
-## Multiple Shops
+### Multiple Shops
 
 An example configuration for multiple shops.
 
@@ -99,7 +99,7 @@ To use the configuration for a shop simply use the `SHOPIFY_ENV` environment var
 SHOPIFY_ENV=store_one_clone theme check
 ```
 
-## Commands
+### Commands
 Download all the theme files
 
 ```
