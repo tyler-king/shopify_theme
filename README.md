@@ -49,6 +49,8 @@ default.
 You can also use `:ignore_files:` to exclude files from getting uploaded, for
 example your `config/settings.html` or other configuration driven items
 
+### Single Shop
+
 ```yaml
 ---
 :api_key: 7a8da86d3dd730b67a357dedabaac5d6
@@ -62,6 +64,42 @@ example your `config/settings.html` or other configuration driven items
 - config/settings.html
 ```
 
+## Multiple Shops
+
+An example configuration for multiple shops.
+
+```yaml
+---
+:store_one:
+  :api_key: 7a8da86d3dd730b67a357dedabaac5d6
+  :password: 552338ce0d3aba7fc501dcf99bc57a81
+  :store: little-plastics.myshopify.com
+  :theme_id:
+  :whitelist_files:
+  - directoryToUpload/
+  - importantFile.txt
+  :ignore_files:
+  - config/settings.html
+  
+:store_one_clone:
+  :api_key: 7a8da86d3dd730b67a357dedab7887d3
+  :password: 552338ce0d3aba7dwq77w8xx9w01234d
+  :store: little-plastics-clone.myshopify.com
+  :theme_id:
+  :whitelist_files:
+  - directoryToUpload/
+  - importantFile.txt
+  :ignore_files:
+  - config/settings.html
+```
+
+To use the configuration for a shop simply use the `SHOPIFY_ENV` environment variable, example:
+
+```bash
+SHOPIFY_ENV=store_one_clone theme check
+```
+
+## Commands
 Download all the theme files
 
 ```
