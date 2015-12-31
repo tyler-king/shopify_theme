@@ -19,6 +19,8 @@ end
 fallback_load_path(File.join(File.dirname(__FILE__), '..', 'lib')) do
   require 'shopify_theme'
   require 'shopify_theme/cli'
+  require 'shopify_theme/releases'
+  require 'shopify_theme/api_checker'
 end
 
 ShopifyTheme::Cli.start(ARGV)

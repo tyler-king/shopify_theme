@@ -1,14 +1,17 @@
 require 'httparty'
 module ShopifyTheme
+  REMOTE_CERT_FILE = 'http://curl.haxx.se/ca/cacert.pem'
+  CA_CERT_FILE = File.expand_path(File.dirname(__FILE__) + '/certs/cacert.pem')
   include HTTParty
+  ssl_ca_file CA_CERT_FILE
   @@current_api_call_count = 0
   @@total_api_calls = 40
 
   NOOPParser = Proc.new {|data, format| {} }
   TIMER_RESET = 10
   PERMIT_LOWER_LIMIT = 3
-  TIMBER_ZIP = "https://github.com/Shopify/Timber/archive/%s.zip"
-  LAST_KNOWN_STABLE = "v1.1.0"
+  MAX_TIMBER_RETRY = 5
+
 
   def self.test?
     ENV['test']
@@ -81,14 +84,16 @@ module ShopifyTheme
     response
   end
 
-  def self.upload_timber(name, master)
-    source = TIMBER_ZIP % (master ? 'master' : LAST_KNOWN_STABLE)
-    puts master ? "Using latest build from shopify" : "Using last known stable build -- #{LAST_KNOWN_STABLE}"
-    response = shopify.post("/admin/themes.json", :body => {:theme => {:name => name, :src => source, :role => 'unpublished'}})
+  def self.upload_timber(name, version, retries=0)
+    release = Releases.new.find(version)
+    response = shopify.post("/admin/themes.json", :body => {:theme => {:name => name, :src => release.zip_url, :role => 'unpublished'}})
     manage_timer(response)
     body = JSON.parse(response.body)
     if theme = body['theme']
+      puts "Successfully created #{name} using Shopify Timber #{version}"
       watch_until_processing_complete(theme)
+    elsif retries < MAX_TIMBER_RETRY
+      upload_timber(name, version, retries + 1)
     else
       puts "Could not download theme!"
       puts body
@@ -115,7 +120,7 @@ module ShopifyTheme
   end
 
   def self.ignore_files
-    (config[:ignore_files] || []).compact.map { |r| Regexp.new(r) }
+    (config[:ignore_files] || []).compact
   end
 
   def self.whitelist_files
@@ -134,9 +139,13 @@ module ShopifyTheme
     shopify.get(path).code == 200
   end
 
+  def self.get_index
+    shopify.get(path)
+  end
+
   private
   def self.shopify
-    basic_auth config[:api_key], config[:password]
+    headers 'X-Shopify-Access-Token' => config[:password] || config[:access_token]
     base_uri "https://#{config[:store]}"
     ShopifyTheme
   end

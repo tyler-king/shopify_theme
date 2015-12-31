@@ -1,55 +1,77 @@
-# Edit your Shopify theme locally
 
+# Edit Your Shopify Theme Locally
 [![Gem Version](https://badge.fury.io/rb/shopify_theme.svg)](http://badge.fury.io/rb/shopify_theme)
-
-The Shopify theme gem is a command line tool that lets you make live changes to themes on your Shopify store. If the command line is scary, check out the [Desktop Theme Editor app](http://apps.shopify.com/desktop-theme-editor).
-
-It will watch your local folders for any changes in your theme (including adding and removing files) and will update your .myshopify.com store to the latest changes. 
 
 ![Shopify theme gem](https://dl.dropboxusercontent.com/u/669627/terminalreadme.png)
 
-You do not need to make changes to your default theme. You can leverage the theme preview feature of Shopify
-that allows you to view what an unpublished theme looks like on your Shopify store. This means you don't need to
-sign up for extra accounts and keep your shop up to date. You will however have a blue bar that shows up that you can
-remove via the web inspector in Chrome or Safari.
+The Shopify theme gem is a command line tool that allows you to manage and edit theme files directly on your computer. This allows you to use your preferred code editing software opposed to the built in code editor available in the “Edit HTML/CSS” page of your store. Files can be manually or automatically uploaded, downloaded, and synced. Depending on how you develop themes and your personal preference, this can allow for a more enjoyable and streamlined workflow.  If the command line is scary for you, check out the [Desktop Theme Editor app](http://apps.shopify.com/desktop-theme-editor).
 
-# Requirements
 
-This gem works with OS X or Windows with Ruby 1.9. 
+## Requirements
+This gem works with OS X or Windows with Ruby 1.9.
 
-First time installing Ruby on windows? Try [Rubyinstaller](http://http://rubyinstaller.org/). 
+First time installing Ruby on Windows? Try [Rubyinstaller](http://rubyinstaller.org/).
 
-# Installation
 
-To install the shopify_theme gem use 'gem install' (you might have use 'sudo gem install')
+## Configuration
+### Setting up Shopify Theme
 
-```
-gem install shopify_theme [optional_theme_id]
-```
+First, you will need to set up a new private app to generate an API key and password. Go to **your_store.com**/admin/apps/private in your web browser.
 
-to update to the latest version
+Click on “Create a Private App” to generate the credentials for a new app. You will need the API key and the password of this newly generated app:
 
-```
-gem update shopify_theme
-```
+![api-key-and-password](doc/API-key-and-password.jpg)
 
-# Usage
+Navigate to the directory where you theme files live, or where you'd like them to be, and execute the following command:
 
-Generate the config file. Go get a valid api_key and password for your store head to `https://[your store].myshopify.com/admin/apps/private` and generate a private application. By default it adds the main theme, if you want to edit one of your other themes, add the `theme_id`.
+`theme configure api_key password store_domain`
 
-```
-theme configure api_key password store_url
-```
+**Important:** enter the `store_domain` with no `http://`.
 
-Example of config.yml. Notice store has no http or https declaration. You can
-use `:whitelist_files:` to specify files for upload. The `assets/`, `config/`,
-`layout/`, `snippets/`, `templates/` and `locales/`directories are included by
-default.
+In your directory you should see a file named config.yml with your credentials. If you want, you may also edit the config.yml file directly and paste your API Key and Password in the appropriate area.
 
-You can also use `:ignore_files:` to exclude files from getting uploaded, for
-example your `config/settings.html` or other configuration driven items
 
-### Single Shop
+### The config.yml File
+The config.yml file contains the information needed for Shopify to authenticate requests and edit/update the theme files in the manner specified. Here is an example of what the contents in a typical `config.yml` file would look like:
+
+#### Here is a Breakdown of the Fields:
+
+`api_key`
+
+The API key generated in your private app.
+
+`password`
+
+The password generated in your private app.
+
+`store`
+
+The address of your store (note there is no leading http:// or https://)
+
+`theme_id`
+
+The theme id of the theme that should be responding to commands. If no theme id is specified, the currently active theme will be modified.
+
+`whitelist_files`
+
+Specifies which files and directories should be responding to changes. If nothing is specified, the  `assets/, config/, layout/, snippets/, templates/ and locales/` directories will be modified according to commands entered.
+
+`ignore_files`
+
+Specifies which files should be explicitly ignored and not affected by any commands entered.
+
+### Alternative OAuth configuration (for advanced users)
+As of v0.0.23, you can use a Shopify application's OAuth access token to authenticate with a store and manipulate theme files.
+
+Once your application has obtained an access token through Shopify's regular OAuth authentication flow, run the following command to configure the gem:
+
+`theme configure_oauth access_token store_domain`
+
+The gem can then be used in exactly the same way as if you were authenticating via a Private App.
+
+Note that the access token your Application has obtained ***must*** be valid for the `write_themes` scope in order to use the theme gem in this way.
+
+### Single Shop Configuration Example
 
 ```yaml
 ---
@@ -64,7 +86,7 @@ example your `config/settings.html` or other configuration driven items
 - config/settings.html
 ```
 
-### Multiple Shops
+### Multiple Shop Configuration Example
 
 An example configuration for multiple shops.
 
@@ -99,80 +121,86 @@ To use the configuration for a shop simply use the `SHOPIFY_ENV` environment var
 SHOPIFY_ENV=store_one_clone theme check
 ```
 
-### Commands
-Download all the theme files
+## Commands
 
-```
-theme download
-```
+`theme download`
 
-Upload a theme file
+Downloads the theme files from your store to your computer.
 
-```
-theme upload assets/layout.liquid
-```
+`theme upload path/to/file`
 
-Remove a theme file
+Uploads a single file to your store. You can also upload directories by using the wildcard character. The command `theme upload assets/*` will upload all files in the assets directory.
 
-```
-theme remove assets/layout.liquid
-```
+`theme remove path/to/file`
 
-Completely replace shop theme assets with the local assets
+Remove a single file from your store. You can also remove directories by using the wildcard character, similar to the theme upload command. The command theme `remove assets/*` will remove all files in the assets directory.  
+`theme replace`
 
-```
-theme replace
-```
+**This command can be destructive so it should be used with caution.**
 
-Watch the theme directory and upload any files as they change
+This command replaces all store files with local files; it ensures the store theme files mirrors the files locally.  If you are familiar with FTP or SFTP to upload files to a server, this is similar but not exactly the same. In addition to transferring files, it will delete any theme files in your store that are not present locally.
 
-```
-theme watch
-```
+`theme watch`
 
-Open the store in the default browser
+Once this command is entered, it continuously monitors files for changes. If a change is detected, it automatically uploads that file to your store. This is similar to [grunt watch](https://github.com/gruntjs/grunt-contrib-watch). To stop theme watch press CRTL + C.  
+`theme open`
 
-```
-theme open
-```
+This command opens your store in the default browser specified on your computer.
 
-Bootstrap a new theme with [Timber](http://www.shopify.com/timber)
+`theme bootstrap api_key password store theme_name --version=[version]`
 
-```
-# use latest stable
-theme bootstrap api_key password shop_name theme_name
+This command is useful if you are starting a brand new theme. It automatically populates your store with a fresh copy of the [Shopify Timber framework](http://shopify.github.io/Timber/).  If you haven’t heard of Timber, it is a theme framework designed for specifically for Shopify themes, made by Shopify. If you enjoy using frameworks like [Bootstrap](http://getbootstrap.com/) or [Foundation](http://foundation.zurb.com/) for your projects, you’ll certainly find Timber useful.
 
-# use latest build
-theme bootstrap api_key password shop_name theme_name master
-```
+The bootstrap command requires several parameters:
 
-# Common Problems
+`api_key`
 
-## SSL Certificates won't verify on Windows
+The same API key used in your config.yml file
 
-If you are experiencing SSL validation errors, it is most likely because your installation does not have any valid
-certificates. This can be taken care of by [downloading a certificate file](http://curl.haxx.se/ca/cacert.pem) and
-[setting a the SSL_CERT_PATH environment variable on your system](http://www.computerhope.com/issues/ch000549.htm).
-For more details check out the following [gist](https://gist.github.com/fnichol/867550).
+`password`
 
-[See the following issue for more details](https://github.com/Shopify/shopify_theme/issues/103)
+The same password used in your config.yml file
 
-## How do I edit a theme that isn't my shops main theme?
+`store`
 
-This can be done by setting the `theme_id` field in `config.yml` which was created when you
-ran `theme configure`. Your file should look like the following:
+The same store used in your config.yml file
 
-```yaml
----
-:api_key: 7a8da86d3dd730b67a357dedabaac5d6
-:password: 552338ce0d3aba7fc501dcf99bc57a81
-:store: little-plastics.myshopify.com
-:theme_id: 0987654321
-```
+`theme_name`
 
-## Where can I find my Theme Id?
+The name of the theme that will house the Timber framework files. A directory will be created with this name and all theme assets will be copied into it.
 
-Currently the best way to find the id of the theme you want to edit is to go to the theme in your
-shops admin and grab it from the url.
+**Options**
+
+`--version=[latest]`
+
+This is the only option that you can provide. You can choose any [Timber release](https://github.com/Shopify/Timber/releases) by simply specifying it (i.e. `v2.0.2`). There are two special versions you can use, `master` and `latest`.
+
+- `master` will download the latest build on the Timber master branch.
+- `latest` will figure out what the most recent release is and use it.
+
+## Tips and Tricks
+### Edit and Preview Inactive Themes
+In many cases you may want to work on a theme behind the scenes while your current theme is still active. To accomplish this there are two steps:
+
+* Utilize the theme preview option in your Shopify store. This is a built in feature of Shopify outside the scope of Shopify theme. 
+You can find your theme ID by looking at the URL:
 
 ![themes/THEME_ID/settings](doc/how_to_find_theme_id.png)
+
+## Common Problems
+### SocketError or SSL Certificate Validation Error on Windows
+If you receive a SocketError or SSL certificate validation error when you try to run any theme command, your install may not have any valid SSL certificates.
+
+In short, you can solve this problem by downloading [this file](http://curl.haxx.se/ca/cacert.pem) and placing it in `C:\RailsInstaller\`. The file should retain the name cacert.pem. Once this is done, run `set SSL_CERT_FILE=C:\RailsInstaller\cacert.pem`.  The Shopify theme commands should be working now. This technique will need to be repeated each time your computer boots up. For a more detailed and permanent solution check out these resources:
+
+* [setting a the SSL_CERT_FILE environment variable on your system](http://www.computerhope.com/issues/ch000549.htm)
+* [Download a cacert.pem file for RailsInstaller](https://gist.github.com/fnichol/867550)
+* [Certificate failed after update](https://github.com/Shopify/shopify_theme/issues/103)
+
+
+## Important Notes
+### Prevent Resetting of Theme Settings
+In some cases you may want to add `config/settings_json.js` to the `ignore_files` list in your config.yml file. When you save your the theme settings for your store, Shopify stores the current values in this file. If you upload your local copy of config/settings_json.js your current settings may be reset to default values if it does not contain the current settings data.
+
+### Sass Compilation
+There is no need to compile your .scss files locally when using Shopify theme.  They are automatically compiled upon upload and available as .css files on the web page, retaining the same filename.
